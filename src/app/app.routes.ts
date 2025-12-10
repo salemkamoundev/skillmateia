@@ -9,6 +9,7 @@ import { CertificationsComponent } from './features/certifications/certification
 import { PricingComponent } from './features/pricing/pricing.component';
 import { SettingsComponent } from './features/settings/settings.component';
 import { AuthGuard } from '@angular/fire/auth-guard'; // Optionnel si configuré
+import { OffersComponent } from './features/offers/offers.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -19,10 +20,6 @@ export const routes: Routes = [
   { path: 'profil', component: UserProfileComponent },
   { path: 'etude', component: StudiesComponent },
   { path: 'certifications', component: CertificationsComponent },
-  
+  { path: 'offers', component: OffersComponent },
   { path: 'settings', component: SettingsComponent },
-  { 
-    path: 'payant', 
-    loadComponent: () => import('./payant/payant.component').then(m => m.PayantComponent) 
-  }
 ];

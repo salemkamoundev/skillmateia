@@ -1,0 +1,41 @@
+<div class="home-container">
+  
+  <header class="hero">
+    <h1>Trouvez votre prochaine compétence</h1>
+    <p>Des milliers de formations gratuites et payantes.</p>
+    
+    <div class="filters">
+      <button (click)="filtre = 'TOUT'" [class.active]="filtre === 'TOUT'">Tout</button>
+      <button (click)="filtre = 'GRATUIT'" [class.active]="filtre === 'GRATUIT'">Gratuit</button>
+      <button (click)="filtre = 'PAYANT'" [class.active]="filtre === 'PAYANT'">Premium (Payant)</button>
+    </div>
+  </header>
+
+  <div *ngIf="loading" class="spinner">Chargement...</div>
+
+  <div *ngIf="!loading && formations.length === 0" class="empty-state">
+    <p>Aucune formation trouvée.</p>
+    <button (click)="genererDemo()" class="btn-generate">🔮 Générer des offres de démo</button>
+  </div>
+
+  <div class="grid">
+    <div *ngFor="let f of filteredFormations" class="card fade-in">
+      <div class="card-img" [style.backgroundImage]="'url(' + f.image + ')'">
+        <span class="badge" [class.free]="f.type === 'GRATUIT'" [class.paid]="f.type === 'PAYANT'">
+          {{ f.type === 'GRATUIT' ? 'GRATUIT' : f.prix + ' €' }}
+        </span>
+      </div>
+      
+      <div class="card-body">
+        <h3>{{ f.titre }}</h3>
+        <p class="author">Par {{ f.auteur }}</p>
+        <p class="desc">{{ f.description }}</p>
+        
+        <button class="btn-action" (click)="allerVersDetail(f)">
+          {{ f.type === 'GRATUIT' ? 'Commencer' : 'Réserver' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

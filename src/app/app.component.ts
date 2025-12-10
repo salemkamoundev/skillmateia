@@ -20,7 +20,7 @@ export class AppComponent {
     { label: 'Profil', icon: 'bi-person', link: '/profil' },
     { label: 'Études', icon: 'bi-book', link: '/etude' },
     { label: 'Certifications', icon: 'bi-award', link: '/certifications' },
-    { label: 'Offres (Payant ?)', icon: 'bi-gem', link: '/payant' },
+    { label: 'Mes Offres', icon: 'bi-tag', link: '/offers' },
     { label: 'Paramètres', icon: 'bi-gear', link: '/settings' }
   ];
 

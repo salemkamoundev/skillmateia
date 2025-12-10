@@ -1,0 +1,74 @@
+<div class="profile-container">
+  
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="profile-card" *ngIf="!isLoading">
+    
+    <div class="card-header">
+      <div class="banner"></div>
+      <div class="avatar-wrapper">
+        <img [src]="isEditing ? (editCache.avatarUrl || '') : (user.avatarUrl || '')" alt="Avatar" class="avatar">
+      </div>
+    </div>
+
+    <div class="card-body">
+      
+      <div *ngIf="!isEditing" class="view-mode fade-in">
+        <div class="identity">
+          <h1>{{ user?.prenom }} {{ user?.nom }}</h1>
+          <p class="job-title">{{ user?.poste }}</p>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Email</label>
+            <span>{{ user?.email }}</span>
+          </div>
+          <div class="info-item full-width">
+            <label>Biographie</label>
+            <p class="bio-text">{{ user?.bio }}</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-edit" (click)="activerEdition()">Modifier le profil ✏️</button>
+        </div>
+      </div>
+
+      <div *ngIf="isEditing" class="edit-mode fade-in">
+        <h2>Modifier mes informations</h2>
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Prénom</label>
+            <input type="text" [(ngModel)]="editCache.prenom">
+          </div>
+          <div class="form-group">
+            <label>Nom</label>
+            <input type="text" [(ngModel)]="editCache.nom">
+          </div>
+          <div class="form-group full-width">
+            <label>Poste Actuel</label>
+            <input type="text" [(ngModel)]="editCache.poste">
+          </div>
+          <div class="form-group full-width">
+            <label>Email</label>
+            <input type="email" [(ngModel)]="editCache.email">
+          </div>
+          <div class="form-group full-width">
+            <label>Biographie</label>
+            <textarea [(ngModel)]="editCache.bio" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="actions-buttons">
+          <button class="btn-cancel" (click)="annulerEdition()">Annuler</button>
+          <button class="btn-save" (click)="sauvegarder()">Enregistrer ✅</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
