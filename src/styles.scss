@@ -1,0 +1,99 @@
+/* Import Bootstrap (Doit être en premier) */
+@import "bootstrap/scss/bootstrap";
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+/* --- 1. Variables Modernes --- */
+:root {
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); /* Indigo -> Violet */
+  --secondary-gradient: linear-gradient(135deg, #ec4899 0%, #db2777 100%); /* Rose */
+  --bg-gradient: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+  --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08);
+  --shadow-hover: 0 20px 40px -10px rgba(99, 102, 241, 0.2);
+}
+
+/* --- 2. Base Reset --- */
+body {
+  background: #f3f4f6;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #1f2937;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- 3. Composants Custom --- */
+
+/* Cartes Modernes */
+.card-modern {
+  background: white;
+  border: none;
+  border-radius: 1.5rem; /* Très arrondi */
+  box-shadow: var(--shadow-soft);
+  transition: all 0.3s ease;
+}
+
+.card-modern:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Boutons Gradients */
+.btn-gradient-primary {
+  background: var(--primary-gradient);
+  border: none;
+  color: white;
+  border-radius: 50rem; /* Pill shape */
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-gradient-primary:hover {
+  filter: brightness(110%);
+  transform: scale(1.02);
+  color: white;
+}
+
+/* Badges Soft */
+.badge-soft-primary {
+  background-color: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  border-radius: 0.5rem;
+  padding: 0.4em 0.8em;
+  font-weight: 600;
+}
+
+/* Inputs Clean */
+.form-control {
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  padding: 0.8rem 1rem;
+  background-color: #f9fafb;
+}
+.form-control:focus {
+  background-color: white;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+}
+
+/* Style pour le lien actif dans le menu */
+.active-menu {
+  background-color: rgba(99, 102, 241, 0.08) !important;
+  color: #6366f1 !important;
+  border-right: 4px solid #6366f1 !important;
+}
+
+.active-menu i {
+  color: #6366f1 !important;
+}
+
+/* Animations de transition */
+.router-container {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

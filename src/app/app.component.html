@@ -1,0 +1,53 @@
+<nav class="navbar fixed-top bg-white/80 backdrop-blur border-bottom shadow-sm" style="height: 64px; backdrop-filter: blur(10px); background-color: rgba(255,255,255,0.9);">
+  <div class="container-fluid">
+    
+    <button class="btn btn-link text-dark border-0 p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
+      <i class="bi bi-list fs-2"></i>
+    </button>
+
+    <a class="navbar-brand fw-bold m-0 text-gradient cursor-pointer" 
+       routerLink="/home" 
+       style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.5rem;">
+      SkillMate
+    </a>
+
+    <div class="d-flex align-items-center">
+      <div *ngIf="authService.currentUser as user" class="rounded-circle bg-light border" 
+           style="width: 35px; height: 35px; background-image: url({{user.photoURL}}); background-size: cover;">
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="offcanvas offcanvas-start border-0 rounded-end-4" tabindex="-1" id="offcanvasNavbar" style="width: 280px;">
+  
+  <div class="offcanvas-header bg-light border-bottom">
+    <h5 class="offcanvas-title fw-bold text-primary">Menu</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  
+  <div class="offcanvas-body p-0 d-flex flex-column justify-content-between h-100">
+    
+    <div class="list-group list-group-flush pt-2">
+      <a *ngFor="let item of menuItems" 
+         [routerLink]="item.link" 
+         routerLinkActive="active-menu"
+         data-bs-dismiss="offcanvas"
+         class="list-group-item list-group-item-action border-0 px-4 py-3 d-flex align-items-center gap-3 fw-medium">
+        <i class="bi {{item.icon}} fs-5 text-muted"></i>
+        {{ item.label }}
+      </a>
+    </div>
+
+    <div class="p-4 border-top bg-light">
+      <button (click)="logout()" data-bs-dismiss="offcanvas" class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2 rounded-pill">
+        <i class="bi bi-box-arrow-left"></i> Déconnexion
+      </button>
+      <div class="text-center mt-3 text-muted small">v1.0.0 • SkillMate</div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-0" style="padding-top: 64px; min-height: 100vh; background-color: #f8f9fa;">
+  <router-outlet></router-outlet>
+</div>

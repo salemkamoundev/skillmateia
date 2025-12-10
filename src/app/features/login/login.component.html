@@ -1,0 +1,28 @@
+<div class="d-flex min-vh-100 align-items-center justify-content-center position-relative overflow-hidden" 
+     style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);">
+
+  <div class="position-absolute rounded-circle bg-white opacity-25" 
+       style="width: 300px; height: 300px; top: -50px; left: -50px;"></div>
+  <div class="position-absolute rounded-circle bg-primary opacity-25" 
+       style="width: 200px; height: 200px; bottom: 50px; right: 50px;"></div>
+
+  <div class="card card-modern p-5 text-center position-relative z-10" 
+       style="max-width: 420px; width: 90%; backdrop-filter: blur(10px); background: rgba(255,255,255,0.9);">
+    
+    <div class="mb-4 d-inline-block p-3 rounded-circle bg-light text-primary shadow-sm">
+      <i class="bi bi-rocket-takeoff-fill fs-1" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+    </div>
+
+    <h1 class="fw-bold mb-2">SkillMate</h1>
+    <p class="text-muted mb-5">La plateforme d'échange de compétences nouvelle génération.</p>
+    
+    <button (click)="login()" class="btn btn-gradient-primary w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+      <i class="bi bi-google"></i> 
+      <span>Continuer avec Google</span>
+    </button>
+    
+    <div class="mt-4 small text-muted">
+      En continuant, vous acceptez nos <a href="#" class="text-decoration-none text-primary">CGU</a>.
+    </div>
+  </div>
+</div>

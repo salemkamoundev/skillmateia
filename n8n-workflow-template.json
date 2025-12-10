@@ -1,0 +1,113 @@
+{
+  "name": "SkillMate AI Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "skillmate-chat-hook",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.text }}",
+              "operation": "contains",
+              "value2": "apprendre"
+            },
+            {
+              "value1": "={{ $json.body.text }}",
+              "operation": "contains",
+              "value2": "tuto"
+            }
+          ]
+        }
+      },
+      "name": "Analyse Mots Clés (IF)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "list",
+        "limit": 1,
+        "part": [
+          "snippet",
+          "id"
+        ],
+        "q": "={{ $json.body.text }}"
+      },
+      "name": "YouTube Search",
+      "type": "n8n-nodes-base.googleYoutube",
+      "typeVersion": 1,
+      "position": [500, 200],
+      "credentials": {
+        "googleApi": {
+          "id": "YOUR_CREDENTIAL_ID_HERE",
+          "name": "Google Youtube API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "projectId": "YOUR_PROJECT_ID",
+        "collection": "chats",
+        "options": {}
+      },
+      "name": "Firestore: Send Suggestion",
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "typeVersion": 1,
+      "position": [700, 300],
+      "credentials": {
+        "googleFirebaseCloudFirestoreApi": {
+          "id": "YOUR_CREDENTIAL_ID_HERE",
+          "name": "Firebase Account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Analyse Mots Clés (IF)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyse Mots Clés (IF)": {
+      "main": [
+        [
+          {
+            "node": "YouTube Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Search": {
+      "main": [
+        [
+          {
+            "node": "Firestore: Send Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

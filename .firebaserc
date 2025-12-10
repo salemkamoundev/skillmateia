@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "colishare",
+    "staging": "skillmateia"
+  },
+  "targets": {},
+  "etags": {}
+}

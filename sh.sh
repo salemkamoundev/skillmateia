@@ -1,0 +1,275 @@
+#!/bin/bash
+
+# ==========================================
+# IMPLEMENTATION EDIT PROFIL (MODAL)
+# ==========================================
+
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}[SUCCÈS]${NC} $1"; }
+
+# ==========================================
+# 1. Mise à jour du Modèle UserProfile
+# ==========================================
+log_info "Mise à jour du modèle UserProfile (Ajout Bio & Titre)..."
+
+cat > src/app/core/models/user-profile.ts <<EOF
+export interface UserProfile {
+  uid: string;
+  displayName: string;
+  email: string;
+  photoURL?: string;
+  title?: string;            // Ex: "Développeur Angular"
+  bio?: string;              // Ex: "Passionné par..."
+  skillsOffered: string[];   // ['Angular', 'Piano']
+  skillsRequested: string[]; // ['Cuisine']
+  fcmToken?: string;
+  createdAt: any;
+}
+EOF
+
+# ==========================================
+# 2. Logique Component (TS)
+# ==========================================
+log_info "Mise à jour de UserProfileComponent.ts..."
+
+cat > src/app/features/user-profile/user-profile.component.ts <<EOF
+import { Component, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AuthService } from '../../core/services/auth.service';
+import { ProfileService } from '../../core/services/profile.service';
+import { UserProfile } from '../../core/models/user-profile';
+import { Observable, switchMap, of, tap } from 'rxjs';
+
+@Component({
+  selector: 'app-user-profile',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './user-profile.component.html',
+  styles: [] // On utilise le SCSS global
+})
+export class UserProfileComponent implements OnInit {
+  private auth = inject(AuthService);
+  private profileService = inject(ProfileService);
+  private fb = inject(FormBuilder);
+
+  user$: Observable<UserProfile | undefined> | undefined;
+  currentUser: UserProfile | null = null; // Pour stocker les données courantes
+
+  showModal = false;
+  profileForm: FormGroup = this.fb.group({
+    displayName: ['', Validators.required],
+    title: [''],
+    bio: [''],
+    skillsOffered: [''],    // On gère ça comme une string "A, B, C"
+    skillsRequested: ['']
+  });
+
+  ngOnInit() {
+    this.user$ = this.auth.user$.pipe(
+      switchMap(user => {
+        if (!user) return of(undefined);
+        return this.profileService.getUserProfile(user.uid);
+      }),
+      tap(user => {
+        if (user) this.currentUser = user;
+      })
+    );
+  }
+
+  openEditModal() {
+    if (!this.currentUser) return;
+
+    // On pré-remplit le formulaire
+    // Note: On transforme les tableaux ['A', 'B'] en string "A, B" pour l'input
+    this.profileForm.patchValue({
+      displayName: this.currentUser.displayName,
+      title: this.currentUser.title || '',
+      bio: this.currentUser.bio || '',
+      skillsOffered: this.currentUser.skillsOffered?.join(', ') || '',
+      skillsRequested: this.currentUser.skillsRequested?.join(', ') || ''
+    });
+
+    this.showModal = true;
+  }
+
+  closeModal() {
+    this.showModal = false;
+  }
+
+  async saveProfile() {
+    if (this.profileForm.invalid) return;
+
+    const formValue = this.profileForm.value;
+
+    // Transformation inverse : String "A, B" -> Array ['A', 'B']
+    const skillsOfferedArray = formValue.skillsOffered
+      ? formValue.skillsOffered.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0)
+      : [];
+
+    const skillsRequestedArray = formValue.skillsRequested
+      ? formValue.skillsRequested.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0)
+      : [];
+
+    const updatedData: Partial<UserProfile> = {
+      displayName: formValue.displayName,
+      title: formValue.title,
+      bio: formValue.bio,
+      skillsOffered: skillsOfferedArray,
+      skillsRequested: skillsRequestedArray
+    };
+
+    try {
+      await this.profileService.saveUserProfile(updatedData);
+      this.closeModal();
+      // Le user$ se mettra à jour automatiquement grâce à Firestore realtime (si configuré) 
+      // ou au prochain rechargement. Pour l'UX immédiate, c'est suffisant.
+    } catch (err) {
+      console.error('Erreur sauvegarde profil', err);
+    }
+  }
+}
+EOF
+
+# ==========================================
+# 3. Template Component (HTML)
+# ==========================================
+log_info "Mise à jour de UserProfileComponent.html..."
+
+cat > src/app/features/user-profile/user-profile.component.html <<EOF
+<div class="container py-4 router-container">
+  
+  <ng-container *ngIf="user$ | async as user; else loading">
+    
+    <div class="card card-modern border-0 shadow-sm mb-4 text-center p-4">
+      <div class="mx-auto mb-3 position-relative">
+        
+        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center display-1 fw-bold text-primary mx-auto shadow-sm" 
+             style="width: 100px; height: 100px; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border: 4px solid white;">
+          {{ user.displayName.charAt(0).toUpperCase() }}
+        </div>
+        
+        <button (click)="openEditModal()" class="btn btn-sm btn-dark rounded-circle position-absolute bottom-0 end-50 translate-middle-x mb-n2 shadow-sm" style="margin-left: 35px;">
+          <i class="bi bi-pencil-fill small"></i>
+        </button>
+      </div>
+
+      <h3 class="fw-bold mb-1">{{ user.displayName }}</h3>
+      <p class="text-muted mb-3">{{ user.title || 'Aucun titre défini' }}</p>
+      
+      <div class="d-flex justify-content-center gap-4 border-top pt-3 mt-2">
+        <div class="text-center">
+          <h5 class="mb-0 fw-bold">{{ user.skillsOffered.length }}</h5>
+          <small class="text-muted text-uppercase" style="font-size: 0.65rem;">Offres</small>
+        </div>
+        <div class="text-center">
+          <h5 class="mb-0 fw-bold">{{ user.skillsRequested.length }}</h5>
+          <small class="text-muted text-uppercase" style="font-size: 0.65rem;">Demandes</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-modern border-0 shadow-sm p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">À propos</h5>
+      </div>
+      
+      <p class="text-muted" *ngIf="user.bio; else noBio">{{ user.bio }}</p>
+      <ng-template #noBio><p class="text-muted fst-italic small">Aucune bio renseignée.</p></ng-template>
+      
+      <hr class="my-4 opacity-10">
+      
+      <h6 class="fw-bold mb-3 small text-uppercase text-primary ls-1">Je propose</h6>
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        <span *ngFor="let skill of user.skillsOffered" class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 border border-primary border-opacity-10">
+          {{ skill }}
+        </span>
+        <span *ngIf="user.skillsOffered.length === 0" class="text-muted small">Rien pour l'instant</span>
+      </div>
+
+      <h6 class="fw-bold mb-3 small text-uppercase text-danger ls-1">Je recherche</h6>
+      <div class="d-flex flex-wrap gap-2">
+        <span *ngFor="let skill of user.skillsRequested" class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 border border-danger border-opacity-10">
+          {{ skill }}
+        </span>
+        <span *ngIf="user.skillsRequested.length === 0" class="text-muted small">Rien pour l'instant</span>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <ng-template #loading>
+    <div class="d-flex flex-column align-items-center justify-content-center py-5 mt-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-3 small">Chargement du profil...</p>
+    </div>
+  </ng-template>
+
+  <div class="modal fade show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5); z-index: 1055;" *ngIf="showModal">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content card-modern border-0">
+        
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">Modifier le profil</h5>
+          <button type="button" class="btn-close" (click)="closeModal()"></button>
+        </div>
+
+        <div class="modal-body">
+          <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Nom complet</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-0"><i class="bi bi-person"></i></span>
+                <input type="text" formControlName="displayName" class="form-control bg-light border-0">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Titre / Poste</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-0"><i class="bi bi-briefcase"></i></span>
+                <input type="text" formControlName="title" class="form-control bg-light border-0" placeholder="Ex: Étudiant, Développeur...">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Bio</label>
+              <textarea formControlName="bio" class="form-control bg-light border-0" rows="3" placeholder="Parlez un peu de vous..."></textarea>
+            </div>
+
+            <hr class="opacity-10 my-4">
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-primary">Compétences offertes</label>
+              <input type="text" formControlName="skillsOffered" class="form-control bg-light border-0" placeholder="Séparez par des virgules (Ex: Angular, Piano)">
+              <div class="form-text x-small">Ce que vous pouvez enseigner aux autres.</div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold small text-danger">Compétences recherchées</label>
+              <input type="text" formControlName="skillsRequested" class="form-control bg-light border-0" placeholder="Séparez par des virgules (Ex: Cuisine, Yoga)">
+              <div class="form-text x-small">Ce que vous souhaitez apprendre.</div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" [disabled]="profileForm.invalid" class="btn btn-gradient-primary py-2 rounded-pill shadow-sm">
+                Enregistrer
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+EOF
+
+log_success "Modification de profil implémentée !"
+echo -e "${GREEN}Allez sur /profil et cliquez sur le crayon pour tester.${NC}"

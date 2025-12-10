@@ -1,0 +1,31 @@
+<div class="container mt-5" style="max-width: 600px;">
+  <div class="card shadow-sm">
+    <div class="card-header bg-white">
+      <h2 class="h5 mb-0">Configurez votre profil</h2>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="profileForm" (ngSubmit)="submit()">
+        
+        <div class="mb-3">
+          <label class="form-label fw-bold">Ce que vous enseignez</label>
+          <input type="text" formControlName="skillsOffered" 
+                 class="form-control" 
+                 placeholder="Ex: Angular, Piano, Cuisine">
+          <div class="form-text">Séparez les compétences par des virgules.</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Ce que vous voulez apprendre</label>
+          <input type="text" formControlName="skillsRequested" 
+                 class="form-control" 
+                 placeholder="Ex: React, Espagnol, Yoga">
+        </div>
+
+        <button type="submit" [disabled]="!profileForm.valid"
+                class="btn btn-success w-100">
+          Enregistrer et continuer
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

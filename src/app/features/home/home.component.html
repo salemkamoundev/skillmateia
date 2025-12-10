@@ -1,0 +1,62 @@
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-5">
+    <div>
+      <h1 class="fw-bold mb-1">Vos Matchs</h1>
+      <p class="text-muted mb-0">Des profils triés sur le volet pour vous.</p>
+    </div>
+    <button class="btn btn-light rounded-pill px-4 shadow-sm border">
+      <i class="bi bi-sliders me-2"></i> Filtres
+    </button>
+  </div>
+  
+  <div *ngIf="matches$ | async as matches; else loading">
+    
+    <div *ngIf="matches.length === 0" class="text-center py-5">
+      <div class="mb-3 text-muted opacity-50"><i class="bi bi-search fs-1"></i></div>
+      <h3 class="text-muted">Aucun match pour l'instant</h3>
+      <p>Essayez d'élargir vos compétences demandées.</p>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      <div class="col" *ngFor="let user of matches">
+        <div class="card card-modern h-100 position-relative overflow-hidden">
+          
+          <div class="position-absolute top-0 start-0 w-100" style="height: 80px; background: var(--primary-gradient); opacity: 0.1;"></div>
+
+          <div class="card-body pt-5 px-4 pb-4 text-center">
+            <div class="position-relative d-inline-block mb-3">
+              <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold fs-3 shadow-sm border border-4 border-white" 
+                   style="width: 80px; height: 80px; background: var(--primary-gradient);">
+                {{ user.displayName.charAt(0) }}
+              </div>
+              <span class="position-absolute bottom-0 end-0 p-2 bg-success border border-white rounded-circle"></span>
+            </div>
+
+            <h5 class="fw-bold mb-1">{{ user.displayName }}</h5>
+            <p class="text-muted small mb-4">Membre depuis 2024</p>
+
+            <div class="text-start bg-light rounded-4 p-3 mb-4">
+              <h6 class="text-uppercase text-muted small fw-bold mb-2 ls-1" style="letter-spacing: 1px; font-size: 0.7rem;">Enseigne</h6>
+              <div class="d-flex flex-wrap gap-2">
+                <span *ngFor="let skill of user.skillsOffered" 
+                      class="badge-soft-primary">
+                  {{ skill }}
+                </span>
+              </div>
+            </div>
+            
+            <button class="btn btn-outline-primary rounded-pill w-100 fw-bold border-2 hover-filled">
+              Discuter <i class="bi bi-chat-dots-fill ms-1"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #loading>
+    <div class="d-flex justify-content-center mt-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+  </ng-template>
+</div>
