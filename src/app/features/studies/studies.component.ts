@@ -1,11 +1,77 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { StudyService } from '../../core/services/study.service';
+import { Study } from '../../core/models/study';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-studies',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './studies.component.html',
-  styles: ``,
+  styleUrls: ['./studies.component.scss']
 })
-export class StudiesComponent {
+export class StudiesComponent implements OnInit {
+  private studyService = inject(StudyService);
+  private fb = inject(FormBuilder);
 
+  studies$: Observable<Study[]> | undefined;
+  
+  showModal = false;
+  isEditing = false;
+  currentId: string | null = null;
+
+  studyForm: FormGroup = this.fb.group({
+    institution: ['', Validators.required],
+    degree: ['', Validators.required],
+    field: ['', Validators.required],
+    startDate: ['', Validators.required],
+    endDate: [''], // Optionnel
+    description: ['']
+  });
+
+  ngOnInit() {
+    this.studies$ = this.studyService.getUserStudies();
+  }
+
+  openAddModal() {
+    this.isEditing = false;
+    this.currentId = null;
+    this.studyForm.reset();
+    this.showModal = true;
+  }
+
+  openEditModal(study: Study) {
+    this.isEditing = true;
+    this.currentId = study.id!;
+    this.studyForm.patchValue(study);
+    this.showModal = true;
+  }
+
+  closeModal() {
+    this.showModal = false;
+  }
+
+  async onSubmit() {
+    if (this.studyForm.invalid) return;
+    const val = this.studyForm.value;
+
+    try {
+      if (this.isEditing && this.currentId) {
+        await this.studyService.updateStudy(this.currentId, val);
+      } else {
+        await this.studyService.addStudy(val);
+      }
+      this.closeModal();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async deleteStudy(id: string) {
+    if(confirm('Supprimer cette formation ?')) {
+      await this.studyService.deleteStudy(id);
+    }
+  }
 }

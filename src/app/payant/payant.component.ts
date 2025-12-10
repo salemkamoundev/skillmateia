@@ -1,38 +1,3 @@
-#!/bin/bash
-
-TARGET_DIR="src/app/payant"
-
-echo "=================================================="
-echo "INSTALLATION DE L'ARCHITECTURE FIREBASE (Hybrid)"
-echo "=================================================="
-
-# 1. Installation des dépendances Firebase pour Angular
-echo "[INFO] Installation de @angular/fire et firebase..."
-npm install firebase @angular/fire --save --force
-
-# 2. Création du dossier
-mkdir -p $TARGET_DIR
-
-# 3. Création du fichier d'environnement (PLACEHOLDER)
-# L'utilisateur devra remplir ses clés ici
-cat <<EOF > src/environments/environment.ts
-export const environment = {
-  production: false,
-  firebase: {
-    apiKey: "VOTRE_API_KEY_ICI",
-    authDomain: "VOTRE_PROJET.firebaseapp.com",
-    projectId: "VOTRE_PROJET_ID",
-    storageBucket: "VOTRE_PROJET.appspot.com",
-    messagingSenderId: "VOTRE_SENDER_ID",
-    appId: "VOTRE_APP_ID",
-    databaseURL: "https://VOTRE_PROJET-default-rtdb.europe-west1.firebasedatabase.app"
-  }
-};
-EOF
-
-# 4. Génération du Composant Logic (TypeScript)
-# Il utilise Firestore pour le Contrat et RTDB pour le Chat
-cat <<EOF > $TARGET_DIR/payant.component.ts
 import { Component, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -218,7 +183,7 @@ export class PayantComponent implements OnDestroy {
     // On stocke le feedback dans une sous-collection ou directement dans le contrat
     const docRef = doc(this.firestore, 'contracts', this.currentContractId);
     await updateDoc(docRef, {
-      [\`feedback_\${this.userRole}\`]: note
+      [`feedback_${this.userRole}`]: note
     });
     alert('Merci pour votre note !');
   }
@@ -227,106 +192,3 @@ export class PayantComponent implements OnDestroy {
     if (this.timerSub) this.timerSub.unsubscribe();
   }
 }
-EOF
-
-# 5. Génération du HTML
-cat <<EOF > $TARGET_DIR/payant.component.html
-<div class="container">
-  
-  <header>
-    <h1>Formation Live (Firebase)</h1>
-    <div class="role-switcher">
-      Rôle actuel : <strong>{{ userRole }}</strong>
-      <button (click)="userRole = userRole === 'MENTOR' ? 'ELEVE' : 'MENTOR'" class="btn-xs">Changer (Dev)</button>
-    </div>
-  </header>
-
-  <div *ngIf="etape === 'CONFIG'" class="card">
-    <h2>Créer une session</h2>
-    <select [(ngModel)]="config.tarifType">
-      <option value="FIXE">Prix Fixe</option>
-      <option value="HEURE">Prix / Heure</option>
-    </select>
-    <input type="number" [(ngModel)]="config.prix" placeholder="Montant">
-    <input type="text" [(ngModel)]="config.sujet" placeholder="Sujet">
-    <button (click)="creerOffre()" class="btn-primary">Créer Offre & Attendre</button>
-  </div>
-
-  <div *ngIf="etape === 'ATTENTE'" class="card">
-    <h3>En attente d'un élève...</h3>
-    <p>ID Contrat Firestore : <small>{{ currentContractId }}</small></p>
-    <hr>
-    <p><em>(Simulation Élève)</em></p>
-    <button (click)="rejoindreSession()" class="btn-secondary">Simuler Arrivée Élève</button>
-  </div>
-
-  <div *ngIf="etape === 'CHAT'" class="chat-container">
-    <div class="chat-header">
-      Negociation pour : {{ contratData?.sujet }} ({{ contratData?.prix }}€)
-    </div>
-    
-    <div class="messages-list">
-      <div *ngFor="let msg of messages$ | async" 
-           [class]="'msg ' + (msg.user === userRole ? 'me' : 'other')">
-        <strong>{{ msg.user }}:</strong> {{ msg.text }}
-      </div>
-    </div>
-
-    <div class="chat-input">
-      <input [(ngModel)]="nouveauMessage" (keyup.enter)="envoyerMessage()" placeholder="Message...">
-      <button (click)="envoyerMessage()">Envoyer</button>
-    </div>
-
-    <div class="actions" *ngIf="userRole === 'MENTOR'">
-      <button (click)="lancerContrat()" class="btn-success">Démarrer le Contrat</button>
-    </div>
-    <div *ngIf="userRole === 'ELEVE'" class="info-wait">
-      Attendez que le mentor démarre le contrat...
-    </div>
-  </div>
-
-  <div *ngIf="etape === 'ACTIF'" class="card active">
-    <h2>🔴 En Direct</h2>
-    <div *ngIf="config.tarifType === 'HEURE'" class="timer">{{ tempsEcoule }}</div>
-    <p>Le contrat est sécurisé sur Firestore.</p>
-    
-    <button *ngIf="userRole === 'MENTOR'" (click)="stopperContrat()" class="btn-danger">Terminer la Formation</button>
-  </div>
-
-  <div *ngIf="etape === 'FIN'" class="card">
-    <h2>Terminé !</h2>
-    <h1 class="price">{{ montantFinal }} €</h1>
-    <p>Montant calculé et synchronisé.</p>
-    
-    <div class="stars">
-      <span>Notez l'expérience :</span>
-      <button (click)="envoyerFeedback(5)">⭐⭐⭐⭐⭐</button>
-    </div>
-  </div>
-
-</div>
-EOF
-
-# 6. Génération CSS
-cat <<EOF > $TARGET_DIR/payant.component.css
-.container { max-width: 500px; margin: 20px auto; font-family: sans-serif; }
-.card { padding: 20px; border: 1px solid #ccc; border-radius: 8px; text-align: center; }
-.btn-xs { font-size: 0.7em; padding: 2px 5px; }
-.chat-container { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
-.messages-list { height: 200px; overflow-y: auto; padding: 10px; background: #f5f5f5; display: flex; flex-direction: column; }
-.msg { padding: 5px 10px; margin: 2px; border-radius: 10px; max-width: 80%; }
-.msg.me { align-self: flex-end; background: #dcf8c6; }
-.msg.other { align-self: flex-start; background: white; }
-.chat-input { display: flex; padding: 5px; border-top: 1px solid #ddd; }
-input { flex: 1; padding: 8px; }
-.timer { font-size: 2em; font-weight: bold; font-family: monospace; color: red; }
-.price { color: green; font-size: 3em; margin: 10px 0; }
-button { cursor: pointer; padding: 10px; margin-top: 5px; width: 100%; }
-.btn-primary { background: #007bff; color: white; border: none; }
-.btn-success { background: #28a745; color: white; border: none; }
-.btn-danger { background: #dc3545; color: white; border: none; }
-EOF
-
-echo "Fichiers créés."
-echo "ATTENTION : SUIVEZ LES INSTRUCTIONS MANUELLES CI-DESSOUS POUR ACTIVER FIREBASE."
-EOF

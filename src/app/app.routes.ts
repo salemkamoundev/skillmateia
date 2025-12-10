@@ -19,6 +19,10 @@ export const routes: Routes = [
   { path: 'profil', component: UserProfileComponent },
   { path: 'etude', component: StudiesComponent },
   { path: 'certifications', component: CertificationsComponent },
-  { path: 'payant', component: PricingComponent },
+  
   { path: 'settings', component: SettingsComponent },
+  { 
+    path: 'payant', 
+    loadComponent: () => import('./payant/payant.component').then(m => m.PayantComponent) 
+  }
 ];
