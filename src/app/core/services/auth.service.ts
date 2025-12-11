@@ -19,8 +19,8 @@ export class AuthService {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(this.auth, provider);
-      // Redirection après login (à adapter selon le flux)
-      this.router.navigate(['/profile-setup']);
+      // CORRECTION : Redirection directe vers la page d'accueil
+      this.router.navigate(['/home']);
     } catch (error) {
       console.error('Erreur de connexion Google', error);
       throw error;

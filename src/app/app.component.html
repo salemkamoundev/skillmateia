@@ -1,8 +1,13 @@
-<nav class="navbar fixed-top bg-white/80 backdrop-blur border-bottom shadow-sm" style="height: 64px; backdrop-filter: blur(10px); background-color: rgba(255,255,255,0.9);">
+<nav *ngIf="authService.user$ | async as user" class="navbar fixed-top bg-white/80 backdrop-blur border-bottom shadow-sm" style="height: 64px; backdrop-filter: blur(10px); background-color: rgba(255,255,255,0.9);">
   <div class="container-fluid">
     
     <button class="btn btn-link text-dark border-0 p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
       <i class="bi bi-list fs-2"></i>
+      
+      <span *ngIf="(unreadCount$ | async) as count" 
+            class="position-absolute top-0 start-0 translate-middle p-1 bg-danger border border-light rounded-circle" 
+            style="margin-top: 15px; margin-left: 15px;">
+      </span>
     </button>
 
     <a class="navbar-brand fw-bold m-0 text-gradient cursor-pointer" 
@@ -11,15 +16,32 @@
       SkillMate
     </a>
 
-    <div class="d-flex align-items-center">
-      <div *ngIf="authService.currentUser as user" class="rounded-circle bg-light border" 
-           style="width: 35px; height: 35px; background-image: url({{user.photoURL}}); background-size: cover;">
+    <div class="d-flex align-items-center gap-3">
+        
+      <a routerLink="/chat" 
+         class="btn btn-light rounded-circle position-relative border-0 shadow-sm d-flex align-items-center justify-content-center text-primary" 
+         style="width: 40px; height: 40px;">
+        <i class="bi bi-chat-dots-fill fs-5"></i>
+        
+        <span *ngIf="(unreadCount$ | async) as count" 
+              class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light notification-badge">
+          {{ count }}
+        </span>
+      </a>
+
+      <div class="rounded-circle bg-light border cursor-pointer" 
+           routerLink="/profil"
+           style="width: 35px; height: 35px; background-image: url({{user.photoURL}}); background-size: cover; background-position: center;">
+           <div *ngIf="!user.photoURL" class="w-100 h-100 d-flex align-items-center justify-content-center fw-bold text-muted small">
+             {{ user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U' }}
+           </div>
       </div>
+
     </div>
   </div>
 </nav>
 
-<div class="offcanvas offcanvas-start border-0 rounded-end-4" tabindex="-1" id="offcanvasNavbar" style="width: 280px;">
+<div *ngIf="authService.user$ | async" class="offcanvas offcanvas-start border-0 rounded-end-4" tabindex="-1" id="offcanvasNavbar" style="width: 280px;">
   
   <div class="offcanvas-header bg-light border-bottom">
     <h5 class="offcanvas-title fw-bold text-primary">Menu</h5>
@@ -29,14 +51,21 @@
   <div class="offcanvas-body p-0 d-flex flex-column justify-content-between h-100">
     
     <div class="list-group list-group-flush pt-2">
-      <a *ngFor="let item of menuItems" 
-         [routerLink]="item.link" 
-         routerLinkActive="active-menu"
-         data-bs-dismiss="offcanvas"
-         class="list-group-item list-group-item-action border-0 px-4 py-3 d-flex align-items-center gap-3 fw-medium">
-        <i class="bi {{item.icon}} fs-5 text-muted"></i>
-        {{ item.label }}
-      </a>
+      <ng-container *ngFor="let item of menuItems">
+        <a [routerLink]="item.link" 
+           routerLinkActive="active-menu"
+           data-bs-dismiss="offcanvas"
+           class="list-group-item list-group-item-action border-0 px-4 py-3 d-flex align-items-center gap-3 fw-medium">
+          
+          <i class="bi {{item.icon}} fs-5 text-muted"></i>
+          {{ item.label }}
+
+          <span *ngIf="item.link === '/chat' && (unreadCount$ | async) as count" 
+                class="badge bg-danger rounded-pill ms-auto">
+            {{ count }}
+          </span>
+        </a>
+      </ng-container>
     </div>
 
     <div class="p-4 border-top bg-light">
@@ -48,6 +77,8 @@
   </div>
 </div>
 
-<div class="container-fluid px-0" style="padding-top: 64px; min-height: 100vh; background-color: #f8f9fa;">
+<div class="container-fluid px-0" 
+     [style.padding-top]="(authService.user$ | async) ? '64px' : '0'"
+     style="min-height: 100vh; background-color: #f8f9fa;">
   <router-outlet></router-outlet>
 </div>
