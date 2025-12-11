@@ -1,98 +1,78 @@
 #!/bin/bash
 
-# Chemin
-TS_FILE="src/app/features/home/home.component.ts"
+CHAT_HTML="src/app/features/chat-room/chat-room.component.html"
 
 echo "=================================================="
-echo "RÉPARATION DU HOME COMPONENT (TYPESCRIPT)"
+echo "SUPPRESSION DU BOUTON OPTIONS (3 POINTS) DANS LE CHAT"
 echo "=================================================="
 
-cat <<EOF > $TS_FILE
-import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router'; // Import nécessaire pour routerLink
-import { ProfileService } from '../../core/services/profile.service';
-import { AuthService } from '../../core/services/auth.service';
-import { UserProfile } from '../../core/models/user-profile';
-import { forkJoin, of } from 'rxjs';
-import { switchMap, take } from 'rxjs/operators';
+cat <<EOF > $CHAT_HTML
+<div class="chat-container d-flex flex-column">
+  
+  <div class="bg-white px-4 py-3 border-bottom shadow-sm d-flex align-items-center justify-content-between sticky-top">
+    <div class="d-flex align-items-center gap-3" *ngIf="targetUser$ | async as target">
+      <button class="btn btn-sm btn-light rounded-circle d-md-none" routerLink="/home"><i class="bi bi-arrow-left"></i></button>
+      
+      <div class="rounded-circle bg-light d-flex align-items-center justify-content-center text-primary fw-bold border border-2 border-white shadow-sm" 
+           style="width: 45px; height: 45px; font-size: 1.2rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        {{ target.displayName.charAt(0).toUpperCase() }}
+      </div>
+      
+      <div>
+        <h6 class="fw-bold mb-0 text-dark">{{ target.displayName }}</h6>
+        <div class="d-flex align-items-center gap-1">
+          <span class="d-inline-block rounded-circle bg-success" style="width: 8px; height: 8px;"></span>
+          <small class="text-muted" style="font-size: 0.75rem;">En ligne</small>
+        </div>
+      </div>
+    </div>
+    
+    <div *ngIf="!(targetUser$ | async)">
+      <span class="spinner-border spinner-border-sm text-primary"></span>
+    </div>
 
-@Component({
-  selector: 'app-home',
-  standalone: true,
-  imports: [CommonModule, RouterModule], // RouterModule est CRUCIAL ici
-  templateUrl: './home.component.html'
-})
-export class HomeComponent implements OnInit {
-  private profileService = inject(ProfileService);
-  private authService = inject(AuthService);
-  private router = inject(Router);
+    </div>
 
-  // Variables attendues par le HTML
-  matches: UserProfile[] = [];
-  currentUser: UserProfile | null = null;
-  loading = true;
-  filtre: 'TOUT' | 'GRATUIT' | 'PAYANT' = 'TOUT';
+  <div #scrollContainer class="flex-grow-1 overflow-auto p-4 chat-scroll">
+    <div class="d-flex flex-column gap-2">
+      
+      <div *ngIf="(messages$ | async)?.length === 0" class="text-center mt-5 opacity-50">
+        <div class="display-1 mb-3">👋</div>
+        <p>Dites bonjour pour démarrer la conversation !</p>
+      </div>
 
-  ngOnInit() {
-    this.chargerDonnees();
-  }
+      <ng-container *ngFor="let msg of messages$ | async">
+        <div class="d-flex w-100" [ngClass]="msg.senderId === currentUserId ? 'justify-content-end' : 'justify-content-start'">
+          <div class="message-bubble shadow-sm" [ngClass]="msg.senderId === currentUserId ? 'msg-sent' : 'msg-received'">
+            {{ msg.text }}
+            <div class="text-end mt-1" style="font-size: 0.65rem; opacity: 0.7;">
+              {{ msg.createdAt?.toDate() | date:'HH:mm' }}
+            </div>
+          </div>
+        </div>
+      </ng-container>
 
-  chargerDonnees() {
-    this.loading = true;
+    </div>
+  </div>
 
-    // On récupère le user courant ET tous les profils
-    this.authService.user$.pipe(
-      take(1),
-      switchMap(user => {
-        if (!user) return forkJoin({ current: of(null), all: this.profileService.getAllProfiles() });
-        return forkJoin({
-          current: this.profileService.getUserProfile(user.uid),
-          all: this.profileService.getAllProfiles()
-        });
-      })
-    ).subscribe({
-      next: (data: { current: UserProfile | null | undefined, all: UserProfile[] }) => {
-        this.currentUser = data.current || null;
-        const allUsers = data.all || [];
+  <div class="bg-white p-3 border-top">
+    <div class="input-group bg-light rounded-pill border p-1 shadow-sm">
+      <input type="text" 
+             class="form-control border-0 bg-transparent shadow-none ps-4" 
+             placeholder="Écrivez un message..." 
+             [(ngModel)]="newMessage" 
+             (keyup.enter)="sendMessage()">
+      
+      <button class="btn btn-gradient-primary rounded-circle m-1 d-flex align-items-center justify-content-center" 
+              style="width: 40px; height: 40px;" 
+              (click)="sendMessage()" 
+              [disabled]="!newMessage.trim()">
+        <i class="bi bi-send-fill fs-6"></i>
+      </button>
+    </div>
+  </div>
 
-        if (this.currentUser) {
-          // LOGIQUE DE MATCHING :
-          // On cherche les gens qui OFFRENT ce que je DEMANDE
-          this.matches = allUsers.filter(otherUser => {
-            // 1. Ne pas se matcher soi-même
-            if (otherUser.uid === this.currentUser?.uid) return false;
-
-            // 2. Vérifier s'il y a une compétence commune
-            // (Est-ce que 'otherUser' enseigne quelque chose que 'currentUser' veut ?)
-            const myRequests = this.currentUser?.skillsRequested || [];
-            const theirOffers = otherUser.skillsOffered || [];
-
-            // On regarde s'il y a au moins une correspondance (insensible à la casse)
-            return theirOffers.some(offer => 
-              myRequests.some(req => req.toLowerCase() === offer.toLowerCase())
-            );
-          });
-        } else {
-          // Si pas connecté ou pas de profil, on montre tout le monde (mode découverte)
-          this.matches = allUsers;
-        }
-
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Erreur chargement home:', err);
-        this.loading = false;
-      }
-    });
-  }
-
-  // Méthode pour le bouton filtre (même si la logique est à affiner plus tard)
-  setFiltre(val: 'TOUT' | 'GRATUIT' | 'PAYANT') {
-    this.filtre = val;
-    // Ici on pourrait filtrer this.matches si on avait le prix dans le profil
-  }
-}
+</div>
 EOF
 
-echo "Réparation terminée. Relancez 'ng serve'."
+echo "Le bouton a été supprimé du header du chat."

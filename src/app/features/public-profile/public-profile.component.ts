@@ -9,7 +9,7 @@ import { UserProfile } from '../../core/models/user-profile';
 import { Offer } from '../../core/models/offer';
 import { Study } from '../../core/models/study';
 import { Certification } from '../../core/models/certification';
-import { forkJoin, switchMap, map, of } from 'rxjs';
+import { forkJoin, switchMap, map, of, take } from 'rxjs'; // Ajout de 'take'
 
 @Component({
   selector: 'app-public-profile',
@@ -38,12 +38,14 @@ export class PublicProfileComponent implements OnInit {
       map(params => params.get('id')),
       switchMap(id => {
         if (!id) return of(null);
-        // Chargement parallèle de toutes les données publiques
+        
+        // CORRECTION : Ajout de .pipe(take(1)) sur chaque observable
+        // Cela force la fin du flux et permet à forkJoin de terminer
         return forkJoin({
-          profile: this.profileService.getUserProfile(id),
-          offers: this.offerService.getOffersByUserId(id),
-          studies: this.studyService.getStudiesByUserId(id),
-          certs: this.certService.getCertificationsByUserId(id)
+          profile: this.profileService.getUserProfile(id).pipe(take(1)),
+          offers: this.offerService.getOffersByUserId(id).pipe(take(1)),
+          studies: this.studyService.getStudiesByUserId(id).pipe(take(1)),
+          certs: this.certService.getCertificationsByUserId(id).pipe(take(1))
         });
       })
     ).subscribe({
@@ -56,7 +58,7 @@ export class PublicProfileComponent implements OnInit {
         } else {
           this.error = true;
         }
-        this.isLoading = false;
+        this.isLoading = false; // Le chargement s'arrête ici
       },
       error: (err) => {
         console.error('Erreur chargement profil public', err);
