@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './studies.component.html',
-  styleUrls: ['./studies.component.scss']
+  styles: [] // Utilise le style global
 })
 export class StudiesComponent implements OnInit {
   private studyService = inject(StudyService);
@@ -27,7 +27,7 @@ export class StudiesComponent implements OnInit {
     degree: ['', Validators.required],
     field: ['', Validators.required],
     startDate: ['', Validators.required],
-    endDate: [''], // Optionnel
+    endDate: [''], 
     description: ['']
   });
 
@@ -35,6 +35,7 @@ export class StudiesComponent implements OnInit {
     this.studies$ = this.studyService.getUserStudies();
   }
 
+  // --- ACTIONS MODAL ---
   openAddModal() {
     this.isEditing = false;
     this.currentId = null;
@@ -53,6 +54,7 @@ export class StudiesComponent implements OnInit {
     this.showModal = false;
   }
 
+  // --- CRUD ---
   async onSubmit() {
     if (this.studyForm.invalid) return;
     const val = this.studyForm.value;
@@ -70,7 +72,7 @@ export class StudiesComponent implements OnInit {
   }
 
   async deleteStudy(id: string) {
-    if(confirm('Supprimer cette formation ?')) {
+    if(confirm('Supprimer ce diplôme ?')) {
       await this.studyService.deleteStudy(id);
     }
   }

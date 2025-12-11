@@ -1,0 +1,112 @@
+<div class="container py-4 router-container">
+
+  <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <div *ngIf="!isLoading && (error || !user)" class="text-center py-5">
+    <h3 class="text-muted">Profil introuvable</h3>
+    <a routerLink="/home" class="btn btn-outline-primary rounded-pill mt-3">Retour à l'accueil</a>
+  </div>
+
+  <ng-container *ngIf="!isLoading && user">
+    
+    <div class="card card-modern border-0 shadow-sm mb-4 text-center p-4">
+      <div class="mx-auto mb-3">
+        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center display-1 fw-bold text-primary mx-auto shadow-sm" 
+             style="width: 100px; height: 100px; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border: 4px solid white;">
+           {{ user.displayName.charAt(0).toUpperCase() }}
+        </div>
+      </div>
+
+      <h3 class="fw-bold mb-1">{{ user.displayName }}</h3>
+      <p class="text-muted mb-3">{{ user.title || 'Membre SkillMate' }}</p>
+      
+      <div class="d-flex justify-content-center gap-2 mb-3">
+        <span *ngFor="let skill of user.skillsOffered" class="badge bg-primary bg-opacity-10 text-primary rounded-pill border border-primary border-opacity-10">
+          {{ skill }}
+        </span>
+      </div>
+
+      <div class="d-flex justify-content-center gap-3">
+        <button class="btn btn-gradient-primary rounded-pill px-4 shadow-sm">
+          <i class="bi bi-chat-dots-fill me-2"></i> Contacter
+        </button>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      
+      <div class="col-lg-7">
+        
+        <div class="card card-modern border-0 shadow-sm p-4 mb-4">
+          <h5 class="fw-bold mb-3">À propos</h5>
+          <p class="text-muted" *ngIf="user.bio">{{ user.bio }}</p>
+          <p class="text-muted fst-italic small" *ngIf="!user.bio">Aucune description.</p>
+        </div>
+
+        <div class="card card-modern border-0 shadow-sm p-4">
+          <h5 class="fw-bold mb-4">Offres de formation ({{ offers.length }})</h5>
+          
+          <div *ngIf="offers.length === 0" class="text-muted small fst-italic">Aucune offre active.</div>
+
+          <div class="d-flex flex-column gap-3">
+            <div *ngFor="let offer of offers" class="p-3 bg-light rounded-3 border border-light">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0">{{ offer.title }}</h6>
+                <span class="badge rounded-pill" 
+                  [ngClass]="{
+                    'bg-primary': offer.type === 'HOURLY',
+                    'bg-success': offer.type === 'FIXED',
+                    'bg-warning text-dark': offer.type === 'EXCHANGE'
+                  }">
+                  {{ offer.type === 'HOURLY' ? offer.price + '€/h' : (offer.type === 'FIXED' ? offer.price + '€' : 'Échange') }}
+                </span>
+              </div>
+              <p class="small text-muted mb-0 text-truncate">{{ offer.description }}</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="col-lg-5">
+        
+        <div class="card card-modern border-0 shadow-sm p-4 mb-4">
+          <h5 class="fw-bold mb-4"><i class="bi bi-mortarboard text-primary me-2"></i> Études</h5>
+          
+          <div *ngIf="studies.length === 0" class="text-muted small fst-italic">Non renseigné.</div>
+
+          <div class="position-relative ps-3" *ngIf="studies.length > 0">
+            <div class="position-absolute top-0 bottom-0 start-0 border-start border-2 border-primary border-opacity-10" style="left: 6px;"></div>
+            
+            <div *ngFor="let study of studies" class="mb-4 position-relative ps-4">
+              <div class="position-absolute start-0 top-0 bg-primary rounded-circle" style="width: 14px; height: 14px; left: 0;"></div>
+              <h6 class="fw-bold mb-0 text-dark">{{ study.degree }}</h6>
+              <div class="small text-primary fw-bold">{{ study.institution }}</div>
+              <div class="x-small text-muted">{{ study.startDate | date:'yyyy' }} - {{ study.endDate ? (study.endDate | date:'yyyy') : 'Auj.' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-modern border-0 shadow-sm p-4">
+          <h5 class="fw-bold mb-4"><i class="bi bi-award text-warning me-2"></i> Certifications</h5>
+          
+          <div *ngIf="certs.length === 0" class="text-muted small fst-italic">Aucune certification.</div>
+
+          <div class="d-flex flex-column gap-3">
+            <div *ngFor="let cert of certs" class="d-flex align-items-center gap-3">
+              <i class="bi bi-patch-check-fill text-success fs-4"></i>
+              <div>
+                <div class="fw-bold small">{{ cert.title }}</div>
+                <div class="x-small text-muted">{{ cert.issuer }} • {{ cert.date | date:'yyyy' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </ng-container>
+</div>

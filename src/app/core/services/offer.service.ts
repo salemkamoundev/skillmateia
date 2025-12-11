@@ -13,40 +13,41 @@ export class OfferService {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
 
-  // Récupérer les offres de l'utilisateur connecté
+  // Pour l'utilisateur connecté
   getUserOffers(): Observable<Offer[]> {
     return this.authService.user$.pipe(
       switchMap(user => {
         if (!user) return of([]);
-        const ref = collection(this.firestore, 'offers');
-        // On filtre par userId
-        const q = query(ref, where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
-        return collectionData(q, { idField: 'id' }) as Observable<Offer[]>;
+        return this.getOffersByUserId(user.uid);
       })
     );
   }
 
-  // Ajouter une offre
+  // MÉTHODE PUBLIQUE : Récupérer les offres de n'importe qui par UID
+  getOffersByUserId(uid: string): Observable<Offer[]> {
+    const ref = collection(this.firestore, 'offers');
+    // On ne montre que les offres actives
+    const q = query(
+      ref, 
+      where('userId', '==', uid), 
+      where('active', '==', true),
+      orderBy('createdAt', 'desc')
+    );
+    return collectionData(q, { idField: 'id' }) as Observable<Offer[]>;
+  }
+
   async addOffer(offer: Partial<Offer>): Promise<void> {
     const user = this.authService.currentUser;
     if (!user) throw new Error('User not connected');
-    
     const ref = collection(this.firestore, 'offers');
-    await addDoc(ref, { 
-      ...offer, 
-      userId: user.uid,
-      active: true,
-      createdAt: new Date() 
-    });
+    await addDoc(ref, { ...offer, userId: user.uid, active: true, createdAt: new Date() });
   }
 
-  // Modifier
   async updateOffer(id: string, offer: Partial<Offer>): Promise<void> {
     const docRef = doc(this.firestore, `offers/${id}`);
     await updateDoc(docRef, offer);
   }
 
-  // Supprimer
   async deleteOffer(id: string): Promise<void> {
     const docRef = doc(this.firestore, `offers/${id}`);
     await deleteDoc(docRef);

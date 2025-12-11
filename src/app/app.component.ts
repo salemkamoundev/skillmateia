@@ -18,15 +18,13 @@ export class AppComponent {
   menuItems = [
     { label: 'Home', icon: 'bi-house-door', link: '/home' },
     { label: 'Profil', icon: 'bi-person', link: '/profil' },
-    { label: 'Études', icon: 'bi-book', link: '/etude' },
-    { label: 'Certifications', icon: 'bi-award', link: '/certifications' },
     { label: 'Mes Offres', icon: 'bi-tag', link: '/offers' },
+    { label: 'Diplômes', icon: 'bi-mortarboard', link: '/etude' }, // <-- AJOUTÉ ICI
+    { label: 'Certifications', icon: 'bi-award', link: '/certifications' },
     { label: 'Paramètres', icon: 'bi-gear', link: '/settings' }
   ];
 
   async logout() {
     await this.authService.logout();
-    // Fermer le menu offcanvas manuellement si besoin via JS, 
-    // mais le router.navigate le fera souvent implicitement
   }
 }

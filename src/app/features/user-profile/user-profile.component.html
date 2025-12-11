@@ -4,12 +4,10 @@
     
     <div class="card card-modern border-0 shadow-sm mb-4 text-center p-4">
       <div class="mx-auto mb-3 position-relative">
-        
         <div class="rounded-circle bg-light d-flex align-items-center justify-content-center display-1 fw-bold text-primary mx-auto shadow-sm" 
              style="width: 100px; height: 100px; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border: 4px solid white;">
            {{ currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U' }}
         </div>
-        
         <button (click)="openEditModal()" class="btn btn-sm btn-dark rounded-circle position-absolute bottom-0 end-50 translate-middle-x mb-n2 shadow-sm" style="margin-left: 35px;">
           <i class="bi bi-pencil-fill small"></i>
         </button>
@@ -27,25 +25,33 @@
           <h5 class="mb-0 fw-bold">{{ currentUser.skillsRequested?.length || 0 }}</h5>
           <small class="text-muted text-uppercase" style="font-size: 0.65rem;">Demandes</small>
         </div>
+        <div class="text-center">
+          <h5 class="mb-0 fw-bold">{{ myCertifications.length }}</h5>
+          <small class="text-muted text-uppercase" style="font-size: 0.65rem;">Diplômes</small>
+        </div>
       </div>
     </div>
 
-    <div class="card card-modern border-0 shadow-sm p-4">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold mb-0">À propos</h5>
-      </div>
-      
+    <div class="card card-modern border-0 shadow-sm p-4 mb-4">
+      <h5 class="fw-bold mb-3">À propos</h5>
       <p class="text-muted" *ngIf="currentUser.bio; else noBio">{{ currentUser.bio }}</p>
       <ng-template #noBio><p class="text-muted fst-italic small">Aucune bio renseignée.</p></ng-template>
       
       <hr class="my-4 opacity-10">
       
-      <h6 class="fw-bold mb-3 small text-uppercase text-primary ls-1">Je propose</h6>
+      <h6 class="fw-bold mb-3 small text-uppercase text-primary ls-1">Je propose (Mes Offres)</h6>
       <div class="d-flex flex-wrap gap-2 mb-4">
-        <span *ngFor="let skill of currentUser.skillsOffered" class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 border border-primary border-opacity-10">
-          {{ skill }}
+        
+        <span *ngFor="let skill of currentUser.skillsOffered" 
+              (click)="openOfferDetails(skill)"
+              class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 border border-primary border-opacity-10 clickable-tag"
+              title="Voir les détails">
+          {{ skill }} <i class="bi bi-info-circle ms-1 opacity-50"></i>
         </span>
-        <span *ngIf="!currentUser.skillsOffered || currentUser.skillsOffered.length === 0" class="text-muted small">Rien pour l'instant</span>
+
+        <span *ngIf="!currentUser.skillsOffered || currentUser.skillsOffered.length === 0" class="text-muted small fst-italic">
+          Aucune offre liée. <a href="/offers">Créez-en une ici</a>.
+        </span>
       </div>
 
       <h6 class="fw-bold mb-3 small text-uppercase text-danger ls-1">Je recherche</h6>
@@ -54,6 +60,40 @@
           {{ skill }}
         </span>
         <span *ngIf="!currentUser.skillsRequested || currentUser.skillsRequested.length === 0" class="text-muted small">Rien pour l'instant</span>
+      </div>
+    </div>
+
+    <div class="card card-modern border-0 shadow-sm p-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="fw-bold mb-0">Certifications & Diplômes</h5>
+        <button (click)="manageCertifications()" class="btn btn-sm btn-light rounded-pill px-3 fw-bold small text-muted">
+          <i class="bi bi-pencil me-1"></i> Gérer
+        </button>
+      </div>
+
+      <div *ngIf="myCertifications.length === 0" class="text-center py-4 bg-light rounded-3 border border-light">
+        <div class="text-muted mb-2"><i class="bi bi-award fs-2 opacity-25"></i></div>
+        <p class="text-muted small mb-2">Aucune certification ajoutée.</p>
+        <button (click)="manageCertifications()" class="btn btn-sm btn-outline-primary rounded-pill">Ajouter</button>
+      </div>
+
+      <div class="d-flex flex-column gap-3" *ngIf="myCertifications.length > 0">
+        <div *ngFor="let cert of myCertifications" class="d-flex align-items-start gap-3 pb-3 border-bottom border-light last:border-0">
+          <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+            <i class="bi bi-patch-check-fill text-success fs-5"></i>
+          </div>
+          <div class="flex-grow-1">
+            <h6 class="fw-bold mb-0 text-dark">{{ cert.title }}</h6>
+            <div class="d-flex align-items-center gap-2 small text-muted">
+              <span>{{ cert.issuer }}</span>
+              <span>•</span>
+              <span>{{ cert.date | date:'MM/yyyy' }}</span>
+            </div>
+          </div>
+          <a *ngIf="cert.url" [href]="cert.url" target="_blank" class="btn btn-sm btn-light rounded-circle text-primary" title="Voir le certificat">
+            <i class="bi bi-box-arrow-up-right"></i>
+          </a>
+        </div>
       </div>
     </div>
 
@@ -66,13 +106,13 @@
     </div>
   </ng-template>
 
-  <div class="modal fade show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5); z-index: 1055;" *ngIf="showModal">
+  <div class="modal fade show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5); z-index: 1055;" *ngIf="showEditModal">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content card-modern border-0">
         
         <div class="modal-header border-0 pb-0">
           <h5 class="modal-title fw-bold">Modifier le profil</h5>
-          <button type="button" class="btn-close" (click)="closeModal()"></button>
+          <button type="button" class="btn-close" (click)="closeEditModal()"></button>
         </div>
 
         <div class="modal-body">
@@ -80,43 +120,67 @@
              
             <div class="mb-3">
               <label class="form-label fw-bold small">Nom complet</label>
-              <div class="input-group">
-                <span class="input-group-text bg-light border-0"><i class="bi bi-person"></i></span>
-                <input type="text" formControlName="displayName" class="form-control bg-light border-0">
-              </div>
+              <input type="text" formControlName="displayName" class="form-control bg-light border-0">
             </div>
 
             <div class="mb-3">
               <label class="form-label fw-bold small">Titre / Poste</label>
-              <div class="input-group">
-                <span class="input-group-text bg-light border-0"><i class="bi bi-briefcase"></i></span>
-                <input type="text" formControlName="title" class="form-control bg-light border-0" placeholder="Ex: Étudiant, Développeur...">
-              </div>
+              <input type="text" formControlName="title" class="form-control bg-light border-0">
             </div>
 
             <div class="mb-3">
               <label class="form-label fw-bold small">Bio</label>
-              <textarea formControlName="bio" class="form-control bg-light border-0" rows="3" placeholder="Parlez un peu de vous..."></textarea>
+              <textarea formControlName="bio" class="form-control bg-light border-0" rows="3"></textarea>
             </div>
 
             <hr class="opacity-10 my-4">
 
-            <div class="mb-3">
-              <label class="form-label fw-bold small text-primary">Compétences offertes</label>
-              <input type="text" formControlName="skillsOffered" class="form-control bg-light border-0" placeholder="Séparez par des virgules (Ex: Angular, Piano)">
-              <div class="form-text x-small">Ce que vous pouvez enseigner aux autres.</div>
+            <div class="mb-3 position-relative">
+              <label class="form-label fw-bold small text-primary d-flex justify-content-between">
+                <span>Ce que je propose</span>
+                <span class="badge bg-light text-dark border">Vos offres actives</span>
+              </label>
+              
+              <div class="tag-input-container">
+                <span *ngFor="let skill of profileForm.get('skillsOffered')?.value" class="tag-badge primary">
+                  {{ skill }} <span (click)="removeSkill('offered', skill)" class="tag-remove">&times;</span>
+                </span>
+                <input type="text" class="tag-input-field" placeholder="Selectionner..." 
+                       [(ngModel)]="offeredInput" [ngModelOptions]="{standalone: true}"
+                       (focus)="onFocusOffered()" (input)="onSearch('offered', offeredInput)">
+              </div>
+
+              <ul class="suggestions-list" *ngIf="showOfferedDropdown">
+                <li *ngIf="filteredOffered.length === 0" class="p-3 text-muted small text-center">
+                  Aucune autre offre. <a href="/offers">Créer</a>
+                </li>
+                <li *ngFor="let s of filteredOffered" class="suggestion-item" (click)="addSkill('offered', s)">
+                  <i class="bi bi-tag-fill me-2 text-primary opacity-50"></i> {{ s }}
+                </li>
+              </ul>
             </div>
 
-            <div class="mb-4">
-              <label class="form-label fw-bold small text-danger">Compétences recherchées</label>
-              <input type="text" formControlName="skillsRequested" class="form-control bg-light border-0" placeholder="Séparez par des virgules (Ex: Cuisine, Yoga)">
-              <div class="form-text x-small">Ce que vous souhaitez apprendre.</div>
+            <div class="mb-4 position-relative">
+              <label class="form-label fw-bold small text-danger">Ce que je veux apprendre</label>
+              
+              <div class="tag-input-container">
+                <span *ngFor="let skill of profileForm.get('skillsRequested')?.value" class="tag-badge danger">
+                  {{ skill }} <span (click)="removeSkill('requested', skill)" class="tag-remove">&times;</span>
+                </span>
+                <input type="text" class="tag-input-field" placeholder="Chercher..." 
+                       [(ngModel)]="requestedInput" [ngModelOptions]="{standalone: true}" 
+                       (input)="onSearch('requested', requestedInput)" (keydown.enter)="onEnter('requested', $event)">
+              </div>
+
+              <ul class="suggestions-list" *ngIf="showRequestedDropdown && filteredRequested.length > 0">
+                <li *ngFor="let s of filteredRequested" class="suggestion-item" (click)="addSkill('requested', s)">
+                  <i class="bi bi-search me-2 text-secondary opacity-50"></i> {{ s }}
+                </li>
+              </ul>
             </div>
 
             <div class="d-grid gap-2">
-              <button type="submit" [disabled]="profileForm.invalid" class="btn btn-gradient-primary py-2 rounded-pill shadow-sm">
-                Enregistrer
-              </button>
+              <button type="submit" [disabled]="profileForm.invalid" class="btn btn-save py-2 rounded-pill shadow-sm">Enregistrer</button>
             </div>
 
           </form>
@@ -124,4 +188,51 @@
       </div>
     </div>
   </div>
+
+  <div class="modal fade show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5); z-index: 1060;" *ngIf="showOfferDetailModal && selectedOffer">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content card-modern border-0 overflow-hidden">
+        
+        <div class="modal-detail-header text-center">
+          <h5 class="fw-bold mb-1">{{ selectedOffer.title }}</h5>
+          <span class="badge rounded-pill" 
+                [ngClass]="{
+                  'bg-primary': selectedOffer.type === 'HOURLY',
+                  'bg-success': selectedOffer.type === 'FIXED',
+                  'bg-warning text-dark': selectedOffer.type === 'EXCHANGE'
+                }">
+            {{ selectedOffer.type === 'HOURLY' ? 'Par Heure' : (selectedOffer.type === 'FIXED' ? 'Prix Fixe' : 'Échange') }}
+          </span>
+          <button type="button" class="btn-close position-absolute top-0 end-0 m-3" (click)="closeOfferDetailModal()"></button>
+        </div>
+
+        <div class="modal-body p-4 text-center">
+          
+          <div class="mb-4">
+            <div *ngIf="selectedOffer.type !== 'EXCHANGE'" class="offer-price-tag">
+              {{ selectedOffer.price }}€ <small class="fs-6 text-muted fw-normal" *ngIf="selectedOffer.type === 'HOURLY'">/h</small>
+            </div>
+            <div *ngIf="selectedOffer.type === 'EXCHANGE'" class="p-3 bg-light rounded border border-warning">
+              <small class="text-muted text-uppercase d-block mb-1">Contre</small>
+              <span class="fw-bold text-dark fs-5"><i class="bi bi-arrow-left-right me-2"></i> {{ selectedOffer.exchangeSkill }}</span>
+            </div>
+          </div>
+
+          <p class="text-muted text-start mb-0 bg-white p-3 rounded border border-light shadow-sm" *ngIf="selectedOffer.description">
+            {{ selectedOffer.description }}
+          </p>
+          <p class="text-muted fst-italic mt-3" *ngIf="!selectedOffer.description">Pas de description fournie.</p>
+
+        </div>
+
+        <div class="modal-footer border-0 justify-content-center pb-4">
+          <button class="btn btn-outline-primary rounded-pill px-4" (click)="manageOffers()">
+            <i class="bi bi-pencil me-2"></i> Gérer mes offres
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
 </div>

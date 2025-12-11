@@ -13,22 +13,22 @@ export class StudyService {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
 
-  // Récupérer les études (triées par date de début décroissante)
   getUserStudies(): Observable<Study[]> {
     return this.authService.user$.pipe(
-      switchMap(user => {
-        if (!user) return of([]);
-        const ref = collection(this.firestore, `users/${user.uid}/studies`);
-        const q = query(ref, orderBy('startDate', 'desc'));
-        return collectionData(q, { idField: 'id' }) as Observable<Study[]>;
-      })
+      switchMap(user => user ? this.getStudiesByUserId(user.uid) : of([]))
     );
+  }
+
+  // MÉTHODE PUBLIQUE
+  getStudiesByUserId(uid: string): Observable<Study[]> {
+    const ref = collection(this.firestore, `users/${uid}/studies`);
+    const q = query(ref, orderBy('startDate', 'desc'));
+    return collectionData(q, { idField: 'id' }) as Observable<Study[]>;
   }
 
   async addStudy(study: Study): Promise<void> {
     const user = this.authService.currentUser;
     if (!user) throw new Error('User not connected');
-    
     const ref = collection(this.firestore, `users/${user.uid}/studies`);
     await addDoc(ref, { ...study, createdAt: new Date() });
   }
