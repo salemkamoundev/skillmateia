@@ -30,12 +30,12 @@
       
       <div class="avatar-container">
         <div class="user-avatar">
-          {{ user.displayName.charAt(0).toUpperCase() }}
+          {{ (user.displayName || 'U').charAt(0).toUpperCase() }}
         </div>
       </div>
 
       <div class="card-body">
-        <div class="user-name">{{ user.displayName }}</div>
+        <div class="user-name">{{ user.displayName || 'Utilisateur' }}</div>
         <div class="user-title">{{ user.title || 'Membre SkillMate' }}</div>
         
         <div class="skills-container">
