@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router'; // Import nécessaire pour routerLink
+import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms'; // Important pour ngModel
 import { ProfileService } from '../../core/services/profile.service';
 import { AuthService } from '../../core/services/auth.service';
 import { UserProfile } from '../../core/models/user-profile';
@@ -10,19 +11,21 @@ import { switchMap, take } from 'rxjs/operators';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule], // RouterModule est CRUCIAL ici
-  templateUrl: './home.component.html'
+  imports: [CommonModule, RouterModule, FormsModule], // Ajout FormsModule
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
   private profileService = inject(ProfileService);
   private authService = inject(AuthService);
-  private router = inject(Router);
-
-  // Variables attendues par le HTML
-  matches: UserProfile[] = [];
+  
+  // Données brutes
+  allUsers: UserProfile[] = [];
   currentUser: UserProfile | null = null;
+  
+  // UI States
   loading = true;
-  filtre: 'TOUT' | 'GRATUIT' | 'PAYANT' = 'TOUT';
+  searchQuery = ''; // Pour la barre de recherche
 
   ngOnInit() {
     this.chargerDonnees();
@@ -31,7 +34,6 @@ export class HomeComponent implements OnInit {
   chargerDonnees() {
     this.loading = true;
 
-    // On récupère le user courant ET tous les profils
     this.authService.user$.pipe(
       take(1),
       switchMap(user => {
@@ -44,29 +46,9 @@ export class HomeComponent implements OnInit {
     ).subscribe({
       next: (data: { current: UserProfile | null | undefined, all: UserProfile[] }) => {
         this.currentUser = data.current || null;
-        const allUsers = data.all || [];
-
-        if (this.currentUser) {
-          // LOGIQUE DE MATCHING :
-          // On cherche les gens qui OFFRENT ce que je DEMANDE
-          this.matches = allUsers.filter(otherUser => {
-            // 1. Ne pas se matcher soi-même
-            if (otherUser.uid === this.currentUser?.uid) return false;
-
-            // 2. Vérifier s'il y a une compétence commune
-            // (Est-ce que 'otherUser' enseigne quelque chose que 'currentUser' veut ?)
-            const myRequests = this.currentUser?.skillsRequested || [];
-            const theirOffers = otherUser.skillsOffered || [];
-
-            // On regarde s'il y a au moins une correspondance (insensible à la casse)
-            return theirOffers.some(offer => 
-              myRequests.some(req => req.toLowerCase() === offer.toLowerCase())
-            );
-          });
-        } else {
-          // Si pas connecté ou pas de profil, on montre tout le monde (mode découverte)
-          this.matches = allUsers;
-        }
+        
+        // On exclut soi-même de la liste
+        this.allUsers = (data.all || []).filter(u => u.uid !== this.currentUser?.uid);
 
         this.loading = false;
       },
@@ -77,9 +59,23 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  // Méthode pour le bouton filtre (même si la logique est à affiner plus tard)
-  setFiltre(val: 'TOUT' | 'GRATUIT' | 'PAYANT') {
-    this.filtre = val;
-    // Ici on pourrait filtrer this.matches si on avait le prix dans le profil
+  // Getter pour filtrer dynamiquement
+  get filteredUsers(): UserProfile[] {
+    if (!this.searchQuery.trim()) {
+      // Si pas de recherche, on peut appliquer une logique de "Matching" par défaut
+      // ou simplement tout retourner.
+      return this.allUsers;
+    }
+
+    const term = this.searchQuery.toLowerCase();
+    
+    return this.allUsers.filter(user => {
+      // Recherche par Nom
+      const nameMatch = user.displayName?.toLowerCase().includes(term);
+      // Recherche par Compétence Offerte
+      const skillMatch = user.skillsOffered?.some(s => s.toLowerCase().includes(term));
+      
+      return nameMatch || skillMatch;
+    });
   }
 }

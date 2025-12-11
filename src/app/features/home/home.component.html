@@ -1,49 +1,66 @@
 <div class="home-container">
   
   <header class="hero">
-    <h1>Trouvez votre prochaine compétence</h1>
-    <p>Des milliers de formations gratuites et payantes.</p>
+    <h1>Trouvez votre mentor</h1>
+    <p>Développez de nouvelles compétences avec la communauté SkillMate.</p>
     
-    <div class="filters">
-      <button (click)="filtre = 'TOUT'" [class.active]="filtre === 'TOUT'">Tout</button>
-      <button (click)="filtre = 'GRATUIT'" [class.active]="filtre === 'GRATUIT'">Gratuit</button>
-      <button (click)="filtre = 'PAYANT'" [class.active]="filtre === 'PAYANT'">Premium (Payant)</button>
+    <div class="search-container">
+      <div class="search-input-wrapper">
+        <div class="search-icon">
+          <i class="bi bi-search"></i>
+        </div>
+        <input type="text" 
+               class="search-input" 
+               placeholder="Que voulez-vous apprendre ? (Ex: Angular, Piano...)"
+               [(ngModel)]="searchQuery">
+        <button *ngIf="searchQuery" (click)="searchQuery=''" class="btn btn-sm text-muted rounded-circle"><i class="bi bi-x"></i></button>
+      </div>
     </div>
   </header>
 
-  <div *ngIf="loading" class="spinner">Chargement...</div>
+  <div *ngIf="loading" class="spinner">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
 
-  <div class="grid" *ngIf="!loading && matches && matches.length > 0">
-    <div *ngFor="let user of matches" class="card fade-in">
+  <div class="grid" *ngIf="!loading">
+    
+    <div *ngFor="let user of filteredUsers" class="card-profile">
       
-      <div class="card-img" style="height: 100px; background: var(--primary-gradient); opacity: 0.8;"></div>
+      <div class="card-header-img"></div>
       
-      <div class="text-center" style="margin-top: -40px;">
-        <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center shadow-sm border border-4 border-white" 
-             style="width: 80px; height: 80px; font-size: 2rem; font-weight: bold; color: #667eea;">
+      <div class="avatar-container">
+        <div class="user-avatar">
           {{ user.displayName.charAt(0).toUpperCase() }}
         </div>
       </div>
 
-      <div class="card-body text-center pt-2">
-        <h3 class="mb-1">{{ user.displayName }}</h3>
-        <p class="author mb-3">{{ user.title || 'Membre SkillMate' }}</p>
+      <div class="card-body">
+        <div class="user-name">{{ user.displayName }}</div>
+        <div class="user-title">{{ user.title || 'Membre SkillMate' }}</div>
         
-        <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
-          <span *ngFor="let skill of user.skillsOffered | slice:0:3" class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 rounded-pill">
+        <div class="skills-container">
+          <span *ngFor="let skill of user.skillsOffered | slice:0:3" class="skill-tag">
             {{ skill }}
           </span>
+          <span *ngIf="!user.skillsOffered || user.skillsOffered.length === 0" class="text-muted small fst-italic">
+            Découverte
+          </span>
         </div>
-        
-        <a [routerLink]="['/p', user.uid]" class="btn-action d-block text-decoration-none text-center">
-          Voir le Profil
-        </a>
+
+        <div class="card-footer-action">
+          <a [routerLink]="['/p', user.uid]" class="btn-view-profile">
+            Voir le Profil
+          </a>
+        </div>
       </div>
     </div>
+
   </div>
 
-  <div *ngIf="!loading && (!matches || matches.length === 0)" class="empty-state">
-    <p>Aucun profil correspondant trouvé.</p>
+  <div *ngIf="!loading && filteredUsers.length === 0" class="empty-state">
+    <div class="mb-3"><i class="bi bi-emoji-frown fs-1 opacity-50"></i></div>
+    <h4>Aucun résultat trouvé</h4>
+    <p>Essayez un autre mot-clé ou videz la recherche.</p>
   </div>
 
 </div>
