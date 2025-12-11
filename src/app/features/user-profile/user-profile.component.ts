@@ -4,57 +4,84 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { UserProfile } from '../../core/models/user-profile';
-import { Observable, switchMap, of, tap } from 'rxjs';
+import { switchMap, of } from 'rxjs';
 
 @Component({
   selector: 'app-user-profile',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './user-profile.component.html',
-  styles: [] // On utilise le SCSS global
+  styles: []
 })
 export class UserProfileComponent implements OnInit {
   private auth = inject(AuthService);
   private profileService = inject(ProfileService);
   private fb = inject(FormBuilder);
 
-  user$: Observable<UserProfile | undefined> | undefined;
-  currentUser: UserProfile | null = null; // Pour stocker les données courantes
-
+  currentUser: UserProfile | null = null;
+  isLoading = true;
   showModal = false;
+
   profileForm: FormGroup = this.fb.group({
     displayName: ['', Validators.required],
     title: [''],
     bio: [''],
-    skillsOffered: [''],    // On gère ça comme une string "A, B, C"
+    skillsOffered: [''],
     skillsRequested: ['']
   });
 
   ngOnInit() {
-    this.user$ = this.auth.user$.pipe(
+    this.chargerProfil();
+  }
+
+  chargerProfil() {
+    this.isLoading = true;
+    this.auth.user$.pipe(
       switchMap(user => {
-        if (!user) return of(undefined);
+        if (!user) return of(null);
         return this.profileService.getUserProfile(user.uid);
-      }),
-      tap(user => {
-        if (user) this.currentUser = user;
       })
-    );
+    ).subscribe({
+      next: (profile) => {
+        if (profile) {
+          this.currentUser = profile;
+        } else {
+          // Création d'un profil fictif pour éviter l'écran blanc si pas encore en BDD
+          const authUser = this.auth.currentUser;
+          if(authUser) {
+             this.currentUser = {
+               uid: authUser.uid,
+               displayName: authUser.displayName || 'Utilisateur',
+               email: authUser.email || '',
+               skillsOffered: [],
+               skillsRequested: [],
+               createdAt: new Date()
+             } as UserProfile;
+          }
+        }
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error(err);
+        this.isLoading = false;
+      }
+    });
   }
 
   openEditModal() {
     if (!this.currentUser) return;
 
-    // On pré-remplit le formulaire
-    // Note: On transforme les tableaux ['A', 'B'] en string "A, B" pour l'input
+    // Conversion des tableaux en chaîne pour l'input (Ex: ["Java", "Angular"] -> "Java, Angular")
+    const offeredStr = this.currentUser.skillsOffered ? this.currentUser.skillsOffered.join(', ') : '';
+    const requestedStr = this.currentUser.skillsRequested ? this.currentUser.skillsRequested.join(', ') : '';
+
     this.profileForm.patchValue({
       displayName: this.currentUser.displayName,
       title: this.currentUser.title || '',
       bio: this.currentUser.bio || '',
-      skillsOffered: this.currentUser.skillsOffered?.join(', ') || '',
-      skillsRequested: this.currentUser.skillsRequested?.join(', ') || ''
+      skillsOffered: offeredStr,
+      skillsRequested: requestedStr
     });
-
     this.showModal = true;
   }
 
@@ -63,15 +90,15 @@ export class UserProfileComponent implements OnInit {
   }
 
   async saveProfile() {
-    if (this.profileForm.invalid) return;
+    if (this.profileForm.invalid || !this.currentUser) return;
 
     const formValue = this.profileForm.value;
 
-    // Transformation inverse : String "A, B" -> Array ['A', 'B']
+    // Conversion inverse : Chaîne -> Tableau
     const skillsOfferedArray = formValue.skillsOffered
       ? formValue.skillsOffered.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0)
       : [];
-
+      
     const skillsRequestedArray = formValue.skillsRequested
       ? formValue.skillsRequested.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0)
       : [];
@@ -86,11 +113,14 @@ export class UserProfileComponent implements OnInit {
 
     try {
       await this.profileService.saveUserProfile(updatedData);
+      
+      // Mise à jour locale immédiate pour voir le résultat sans recharger
+      this.currentUser = { ...this.currentUser, ...updatedData } as UserProfile;
+      
       this.closeModal();
-      // Le user$ se mettra à jour automatiquement grâce à Firestore realtime (si configuré) 
-      // ou au prochain rechargement. Pour l'UX immédiate, c'est suffisant.
     } catch (err) {
       console.error('Erreur sauvegarde profil', err);
+      alert("Erreur lors de la sauvegarde.");
     }
   }
 }

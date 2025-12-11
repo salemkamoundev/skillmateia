@@ -1,13 +1,13 @@
 <div class="container py-4 router-container">
   
-  <ng-container *ngIf="user$ | async as user; else loading">
+  <ng-container *ngIf="!isLoading && currentUser; else loading">
     
     <div class="card card-modern border-0 shadow-sm mb-4 text-center p-4">
       <div class="mx-auto mb-3 position-relative">
         
         <div class="rounded-circle bg-light d-flex align-items-center justify-content-center display-1 fw-bold text-primary mx-auto shadow-sm" 
              style="width: 100px; height: 100px; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border: 4px solid white;">
-          {{ user.displayName.charAt(0).toUpperCase() }}
+           {{ currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U' }}
         </div>
         
         <button (click)="openEditModal()" class="btn btn-sm btn-dark rounded-circle position-absolute bottom-0 end-50 translate-middle-x mb-n2 shadow-sm" style="margin-left: 35px;">
@@ -15,16 +15,16 @@
         </button>
       </div>
 
-      <h3 class="fw-bold mb-1">{{ user.displayName }}</h3>
-      <p class="text-muted mb-3">{{ user.title || 'Aucun titre défini' }}</p>
+      <h3 class="fw-bold mb-1">{{ currentUser.displayName }}</h3>
+      <p class="text-muted mb-3">{{ currentUser.title || 'Aucun titre défini' }}</p>
       
       <div class="d-flex justify-content-center gap-4 border-top pt-3 mt-2">
         <div class="text-center">
-          <h5 class="mb-0 fw-bold">{{ user.skillsOffered.length }}</h5>
+          <h5 class="mb-0 fw-bold">{{ currentUser.skillsOffered?.length || 0 }}</h5>
           <small class="text-muted text-uppercase" style="font-size: 0.65rem;">Offres</small>
         </div>
         <div class="text-center">
-          <h5 class="mb-0 fw-bold">{{ user.skillsRequested.length }}</h5>
+          <h5 class="mb-0 fw-bold">{{ currentUser.skillsRequested?.length || 0 }}</h5>
           <small class="text-muted text-uppercase" style="font-size: 0.65rem;">Demandes</small>
         </div>
       </div>
@@ -35,25 +35,25 @@
         <h5 class="fw-bold mb-0">À propos</h5>
       </div>
       
-      <p class="text-muted" *ngIf="user.bio; else noBio">{{ user.bio }}</p>
+      <p class="text-muted" *ngIf="currentUser.bio; else noBio">{{ currentUser.bio }}</p>
       <ng-template #noBio><p class="text-muted fst-italic small">Aucune bio renseignée.</p></ng-template>
       
       <hr class="my-4 opacity-10">
       
       <h6 class="fw-bold mb-3 small text-uppercase text-primary ls-1">Je propose</h6>
       <div class="d-flex flex-wrap gap-2 mb-4">
-        <span *ngFor="let skill of user.skillsOffered" class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 border border-primary border-opacity-10">
+        <span *ngFor="let skill of currentUser.skillsOffered" class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 border border-primary border-opacity-10">
           {{ skill }}
         </span>
-        <span *ngIf="user.skillsOffered.length === 0" class="text-muted small">Rien pour l'instant</span>
+        <span *ngIf="!currentUser.skillsOffered || currentUser.skillsOffered.length === 0" class="text-muted small">Rien pour l'instant</span>
       </div>
 
       <h6 class="fw-bold mb-3 small text-uppercase text-danger ls-1">Je recherche</h6>
       <div class="d-flex flex-wrap gap-2">
-        <span *ngFor="let skill of user.skillsRequested" class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 border border-danger border-opacity-10">
+        <span *ngFor="let skill of currentUser.skillsRequested" class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 border border-danger border-opacity-10">
           {{ skill }}
         </span>
-        <span *ngIf="user.skillsRequested.length === 0" class="text-muted small">Rien pour l'instant</span>
+        <span *ngIf="!currentUser.skillsRequested || currentUser.skillsRequested.length === 0" class="text-muted small">Rien pour l'instant</span>
       </div>
     </div>
 
@@ -77,7 +77,7 @@
 
         <div class="modal-body">
           <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
-            
+             
             <div class="mb-3">
               <label class="form-label fw-bold small">Nom complet</label>
               <div class="input-group">
@@ -124,5 +124,4 @@
       </div>
     </div>
   </div>
-
 </div>

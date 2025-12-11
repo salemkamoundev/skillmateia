@@ -3,7 +3,7 @@
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <h2 class="h4 fw-bold mb-1">Mes Offres</h2>
-      <p class="text-muted small mb-0">Gérez vos services, tarifs ou échanges.</p>
+      <p class="text-muted small mb-0">Gérez vos services et tarifs.</p>
     </div>
     <button (click)="openAddModal()" class="btn btn-gradient-primary rounded-pill shadow-sm">
       <i class="bi bi-plus-lg me-1"></i> Créer une offre
@@ -32,10 +32,11 @@
           <div class="card-body p-4 ps-4">
             
             <div class="d-flex justify-content-between align-items-start mb-3">
+              
               <span class="badge rounded-pill fw-normal border"
                 [ngClass]="{
                   'bg-primary bg-opacity-10 text-primary border-primary border-opacity-10': offer.type === 'HOURLY',
-                  'bg-success bg-opacity-10 text-success border-success border-opacity-10': offer.type === 'FIXED',
+                  'bg-success text-white border-success': offer.type === 'FIXED', 
                   'bg-warning bg-opacity-10 text-warning border-warning border-opacity-10': offer.type === 'EXCHANGE'
                 }">
                 <i class="bi" [ngClass]="{
